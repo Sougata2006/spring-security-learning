@@ -59,7 +59,7 @@ public class GreetingsController {
             map.put("message", "Bad credential");
             map.put("status", false);
 
-            return new ResponseEntity<Object>(map, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(map, HttpStatus.UNAUTHORIZED);
         }
 
         SecurityContextHolder.getContext().setAuthentication(authentication);

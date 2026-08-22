@@ -3,6 +3,7 @@ package com.security.app;
 import com.security.app.jwt.AuthEntryPointJwt;
 import com.security.app.jwt.AuthTokenFilter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -43,10 +44,11 @@ public class SecurityConfig {
         http.authorizeHttpRequests((requests) -> requests.requestMatchers("/h2-console/**")
                 .permitAll()
                 .requestMatchers("/api/signin").permitAll()
+                .requestMatchers("/error").permitAll()
                 .anyRequest().authenticated());
 
         http.csrf(csrf ->
-                csrf.ignoringRequestMatchers("/h2-console/**")
+                csrf.disable()
         );
 
         http.headers(headers ->
@@ -68,20 +70,22 @@ public class SecurityConfig {
     }
 
     @Bean
-    public UserDetailsService userDetailsService() {
+    public UserDetailsService userDetailsService(DataSource dataSource){
+        return new JdbcUserDetailsManager(dataSource);
+    }
 
-        UserDetails user1 = User.withUsername("user1").password(passwordEncoder().encode("password1")).roles("USER").build(); //{noop} is not a production grade practice after I will build password encoders
-        UserDetails admin = User.withUsername("admin").password(passwordEncoder().encode("adminPass")).roles("ADMIN").build();
+    @Bean
+    public CommandLineRunner initDetails(UserDetailsService userDetailsService){
+        return args -> {
+            JdbcUserDetailsManager manager = (JdbcUserDetailsManager) userDetailsService;
+            UserDetails user1 = User.withUsername("user1").password(passwordEncoder().encode("password1")).roles("USER").build();
+            UserDetails admin = User.withUsername("admin").password(passwordEncoder().encode("adminPass")).roles("ADMIN").build();
 
+            JdbcUserDetailsManager userDetailsManager = new JdbcUserDetailsManager(dataSource);
 
-        JdbcUserDetailsManager userDetailsManager = new JdbcUserDetailsManager(dataSource);
-
-        userDetailsManager.createUser(user1);
-        userDetailsManager.createUser(admin);
-
-        return userDetailsManager;
-
-//        return new InMemoryUserDetailsManager(user1, admin);
+            userDetailsManager.createUser(user1);
+            userDetailsManager.createUser(admin);
+        };
     }
 
     @Bean
