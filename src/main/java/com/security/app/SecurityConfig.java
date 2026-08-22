@@ -20,11 +20,21 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception{
-        http.authorizeHttpRequests((requests) ->requests.anyRequest().authenticated());
+        http.authorizeHttpRequests((requests) ->requests.requestMatchers("/h2-console/**").permitAll()
+                .anyRequest().authenticated());
+
+        http.csrf(csrf ->
+                csrf.ignoringRequestMatchers("/h2-console/**")
+        );
+
+        http.headers(headers ->
+                headers.frameOptions(frame -> frame.sameOrigin())
+        );
+
 
         http.sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-//        http.formLogin(withDefaults());
+
         http.httpBasic(withDefaults());
         return http.build();
     }
